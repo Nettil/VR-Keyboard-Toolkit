@@ -1,0 +1,37 @@
+name: Sync VR Keyboard Toolkit
+
+# Manual trigger via the Actions tab
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the current repo
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      # 2. Pull toolkit from your source (could be another branch or repo)
+      - name: Pull Toolkit Files
+        run: |
+          # If you maintain a separate "source" repo:
+          git clone https://github.com/Nettil/vr-keyboard-toolkit-source.git source
+          rsync -av source/ ./ 
+          # Or if your source is in another branch, you could:
+          # git fetch origin source-branch
+          # git checkout origin/source-branch -- docs scripts Assets Tests
+
+      # 3. Commit and push back to main
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "chore: sync toolkit files [skip ci]"
+          git push origin HEAD:main --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
